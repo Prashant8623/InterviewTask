@@ -26,7 +26,7 @@ const Main = () => {
         path="/users"
         element={<Users users={users} deleteUser={deleteUser} />}
       />
-      <Route path="/users/new" element={<UserForm />} addUser={addUser} />
+      <Route path="/users/new" element={<UserForm addUser={addUser} />} />
 
       <Route
         path="/users/:id/edit"
@@ -51,4 +51,3 @@ const Main = () => {
 };
 
 export default Main;
-
