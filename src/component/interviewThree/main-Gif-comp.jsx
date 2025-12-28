@@ -5,6 +5,7 @@ import ErrorMessage from "./error-message";
 import Loader from "./loader";
 import EmptyState from "./empty-state";
 import GiftCard from "./gift-card";
+import PaginationPage from "./pagination-page";
 
 const API_KEY = "U5oTb4iIB71RhG9a9kRkQzDMKWrcDOhv";
 
@@ -14,8 +15,13 @@ const MainGifComp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hasSearched, setSearched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
-  const searchGifs = async () => {
+  const gifsPerPage = 1;
+  const totalPages = Math.ceil(totalResults / gifsPerPage);
+
+  const searchGifs = async (page = 1) => {
     if (!query.trim()) {
       setError("Please enter a search term");
       return;
@@ -24,10 +30,11 @@ const MainGifComp = () => {
     setLoading(true);
     setError("");
     setSearched(true);
+    const offset = (page - 1) * gifsPerPage;
 
     try {
       const res = await fetch(
-        `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${query}&limit=10`
+        `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${query}&limit=${gifsPerPage}&offset=${offset}`
       );
       if (!res.ok) {
         throw new error("Failed to fetch GIFS");
@@ -35,12 +42,19 @@ const MainGifComp = () => {
 
       const data = await res.json();
       setGifs(data.data);
+      setTotalResults(data.pagination.total_count);
+      setCurrentPage(page);
     } catch (err) {
       setError("Failed to fetch GIFS please try agian");
       setGifs([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page) => {
+    searchGifs(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleKeyPress = (e) => {
@@ -89,11 +103,22 @@ const MainGifComp = () => {
             )}
 
             {!loading && gifs.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {gifs.map((gif) => (
-                  <GiftCard key={gif.id} gif={gif} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {gifs.map((gif) => (
+                    <GiftCard key={gif.id} gif={gif} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <PaginationPage
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    loading={loading}
+                  />
+                )}
+              </>
             )}
 
             {!loading && !hasSearched && (
